@@ -1,0 +1,51 @@
+<!-- templates/calculator/history.html -->
+{% extends 'base.html' %}
+{% block title %}Hisoblashlar Tarixi{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="history-page">
+        <div class="history-header">
+            <h1>📋 Hisoblashlar tarixi</h1>
+            <form method="post" action="{% url 'clear_history' %}"
+                  onsubmit="return confirm('Haqiqatan ham tozalaysizmi?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">🗑 Tarixni tozalash</button>
+            </form>
+        </div>
+
+        {% if history %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Ifoda</th>
+                    <th>Natija</th>
+                    <th>Tur</th>
+                    <th>Vaqt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in history %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><code>{{ item.expression }}</code></td>
+                    <td><strong>{{ item.result }}</strong></td>
+                    <td>
+                        <span class="badge {% if item.calculation_type == 'advanced' %}badge-purple{% else %}badge-blue{% endif %}">
+                            {{ item.get_calculation_type_display }}
+                        </span>
+                    </td>
+                    <td>{{ item.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>🤷 Hali hisoblashlar yo'q.</p>
+            <a href="{% url 'home' %}" class="btn btn-primary">Hisoblashni boshlash</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+<!-- templates/accounts/register.html -->
+{% extends 'base.html' %}
+{% block title %}Ro'yxatdan o'tish{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">✨ Ro'yxatdan o'tish</h2>
+        <p class="auth-subtitle">Oliy matematika funksiyalaridan foydalanish uchun ro'yxatdan o'ting</p>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-full">Ro'yxatdan o'tish</button>
+        </form>
+        <p class="auth-footer">
+            Allaqachon hisobingiz bormi?
+            <a href="{% url 'login' %}">Kirish</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+<!-- templates/accounts/profile.html -->
+{% extends 'base.html' %}
+{% block title %}Profil - {{ user.username }}{% endblock %}
+{% block content %}
+<div class="page-container">
+    <div class="profile-card">
+        <h1 class="calc-title">👤 Profil</h1>
+
+        <div class="profile-info">
+            <div class="profile-row">
+                <span class="profile-label">Foydalanuvchi nomi:</span>
+                <span class="profile-value">{{ user.username }}</span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-label">Email:</span>
+                <span class="profile-value">{{ user.email }}</span>
+            </div>
+            <div class="profile-row">
+                <span class="profile-label">Ro'yxatdan o'tgan:</span>
+                <span class="profile-value">{{ user.date_joined|date:"d.m.Y" }}</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_calculations }}</div>
+                <div class="stat-label">Jami hisoblashlar</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ basic_count }}</div>
+                <div class="stat-label">Oddiy amallar</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ advanced_count }}</div>
+                <div class="stat-label">Oliy matematika</div>
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <a href="{% url 'history' %}" class="btn btn-primary">📋 Tarixni ko'rish</a>
+            <a href="{% url 'advanced' %}" class="btn btn-outline">📐 Oliy matematika</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
