@@ -1,0 +1,179 @@
+<!-- templates/calculator/home.html -->
+{% extends 'base.html' %}
+
+{% block title %}Kalkulyator - Asosiy{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="calc-wrapper">
+
+        <!-- KALKULYATOR BLOKI -->
+        <div class="calculator-card">
+            <h1 class="calc-title">🧮 Kalkulyator</h1>
+            <p class="calc-subtitle">Oddiy amallar - hamma uchun bepul</p>
+
+            <!-- EKRAN -->
+            <div class="calc-screen">
+                <div id="expression" class="calc-expression"></div>
+                <div id="display" class="calc-display">0</div>
+            </div>
+
+            <!-- TUGMALAR -->
+            <div class="calc-buttons">
+                <button class="btn-calc btn-clear" onclick="clearAll()">C</button>
+                <button class="btn-calc btn-clear" onclick="clearEntry()">CE</button>
+                <button class="btn-calc btn-clear" onclick="appendToDisplay('%')">%</button>
+                <button class="btn-calc btn-operator" onclick="appendToDisplay('/')">÷</button>
+
+                <!-- 2-qator: 7 8 9 ko'paytirish -->
+                <button class="btn-calc btn-number" onclick="appendToDisplay('7')">7</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('8')">8</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('9')">9</button>
+                <button class="btn-calc btn-operator" onclick="appendToDisplay('*')">×</button>
+
+                <!-- 3-qator: 4 5 6 ayirish -->
+                <button class="btn-calc btn-number" onclick="appendToDisplay('4')">4</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('5')">5</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('6')">6</button>
+                <button class="btn-calc btn-operator" onclick="appendToDisplay('-')">−</button>
+
+                <!-- 4-qator: 1 2 3 qo'shish -->
+                <button class="btn-calc btn-number" onclick="appendToDisplay('1')">1</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('2')">2</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('3')">3</button>
+                <button class="btn-calc btn-operator" onclick="appendToDisplay('+')">+</button>
+
+                <!-- 5-qator: 0 nuqta teng -->
+                <button class="btn-calc btn-number btn-wide" onclick="appendToDisplay('0')">0</button>
+                <button class="btn-calc btn-number" onclick="appendToDisplay('.')">.</button>
+                <button class="btn-calc btn-equals" onclick="calculate()">=</button>
+            </div>
+
+            <!-- OLIY MATEMATIKA REKLAMA BANERI -->
+            {% if not user.is_authenticated %}
+            <div class="advanced-banner">
+                <span>🔒 log, sin, cos, √ va boshqalar</span>
+                <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Ro'yxatdan o'tish</a>
+            </div>
+            {% else %}
+            <div class="advanced-banner advanced-banner-loggedin">
+                <span>✨ Oliy matematika funksiyalari mavjud!</span>
+                <a href="{% url 'advanced' %}" class="btn btn-primary btn-sm">Ochish →</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- TARIX PANEL (faqat login bo'lganda) -->
+        {% if user.is_authenticated and history %}
+        <div class="history-panel">
+            <h3>📋 So'nggi hisoblashlar</h3>
+            <ul class="history-list">
+                {% for item in history %}
+                <li class="history-item" onclick="loadFromHistory('{{ item.expression }}', '{{ item.result }}')">
+                    <span class="history-expr">{{ item.expression }}</span>
+                    <span class="history-result">= {{ item.result }}</span>
+                    <span class="history-type {% if item.calculation_type == 'advanced' %}type-advanced{% endif %}">
+                        {{ item.get_calculation_type_display }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'history' %}" class="view-all-link">Hammasini ko'rish →</a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentExpression = '';
+let justCalculated = false;
+
+function appendToDisplay(value) {
+    if (justCalculated && !isNaN(value) === false) {
+        // Operator bossilsa, natijadan davom ettir
+        justCalculated = false;
+    } else if (justCalculated) {
+        // Son bossilsa, yangi hisoblash boshlaydi
+        currentExpression = '';
+        justCalculated = false;
+    }
+    currentExpression += value;
+    document.getElementById('display').textContent = currentExpression;
+}
+
+function clearAll() {
+    currentExpression = '';
+    document.getElementById('display').textContent = '0';
+    document.getElementById('expression').textContent = '';
+    justCalculated = false;
+}
+
+function clearEntry() {
+    currentExpression = currentExpression.slice(0, -1);
+    document.getElementById('display').textContent = currentExpression || '0';
+}
+
+async function calculate() {
+    if (!currentExpression) return;
+
+    document.getElementById('expression').textContent = currentExpression + ' =';
+
+    try {
+        const response = await fetch('/calculate/basic/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')  // CSRF token
+            },
+            body: JSON.stringify({ expression: currentExpression })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            document.getElementById('display').textContent = 'Xato!';
+            showError(data.error);
+        } else {
+            document.getElementById('display').textContent = data.result;
+            currentExpression = data.result;
+            justCalculated = true;
+        }
+    } catch (err) {
+        document.getElementById('display').textContent = 'Xato!';
+    }
+}
+
+function loadFromHistory(expression, result) {
+    currentExpression = expression;
+    document.getElementById('display').textContent = result;
+    document.getElementById('expression').textContent = expression + ' =';
+}
+
+function showError(msg) {
+    const display = document.getElementById('display');
+    display.style.color = '#ef4444';
+    setTimeout(() => { display.style.color = ''; }, 2000);
+    alert(msg);
+}
+
+// CSRF token olish (Django xavfsizligi uchun)
+function getCookie(name) {
+    let value = '; ' + document.cookie;
+    let parts = value.split('; ' + name + '=');
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+// Klaviatura qo'llab-quvvatlash
+document.addEventListener('keydown', function(e) {
+    if (e.key >= '0' && e.key <= '9') appendToDisplay(e.key);
+    else if (['+', '-', '*', '/', '.', '%'].includes(e.key)) appendToDisplay(e.key);
+    else if (e.key === 'Enter') calculate();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.key === 'Backspace') clearEntry();
+});
+</script>
+{% endblock %}

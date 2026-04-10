@@ -1,0 +1,29 @@
+<!-- templates/accounts/login.html -->
+{% extends 'base.html' %}
+{% block title %}Kirish{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">🔐 Tizimga kirish</h2>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                    <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-full">Kirish</button>
+        </form>
+        <p class="auth-footer">
+            Hisobingiz yo'qmi?
+            <a href="{% url 'register' %}">Ro'yxatdan o'ting</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

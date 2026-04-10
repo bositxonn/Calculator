@@ -1,0 +1,182 @@
+<!-- templates/calculator/advanced.html -->
+<!-- Bu sahifaga @login_required himoya qo'yilgan! -->
+{% extends 'base.html' %}
+
+{% block title %}Oliy Matematika{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="advanced-wrapper">
+
+        <div class="advanced-card">
+            <h1 class="calc-title">📐 Oliy Matematika</h1>
+            <p class="calc-subtitle">Salom, <strong>{{ user.username }}</strong>! Barcha funksiyalar sizga ochiq.</p>
+
+            <!-- EKRAN -->
+            <div class="calc-screen">
+                <div id="adv-expression" class="calc-expression"></div>
+                <div id="adv-display" class="calc-display">0</div>
+            </div>
+
+            <!-- KIRISH MAYDONI -->
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Qiymat (x):</label>
+                    <input type="number" id="main-value" class="number-input"
+                           placeholder="Masalan: 100" step="any">
+                </div>
+                <div class="input-group" id="base-group" style="display:none;">
+                    <label>Asos / daraja (n):</label>
+                    <input type="number" id="base-value" class="number-input"
+                           placeholder="Masalan: 10" step="any">
+                </div>
+            </div>
+
+            <!-- FUNKSIYA TUGMALARI -->
+            <div class="func-grid">
+                <h4 class="func-group-title">📊 Logarifmlar</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('log')" title="Tabiiy logarifm">ln(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('log10')" title="O'nlik logarifm">log₁₀(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('log2')" title="Ikkilik logarifm">log₂(x)</button>
+                    <button class="btn-func btn-with-base" onclick="showBase(); calcAdvanced('log')" title="Ixtiyoriy asos">logₙ(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('exp')" title="Eyler funksiyasi">eˣ</button>
+                </div>
+
+                <h4 class="func-group-title">📐 Trigonometriya (daraja)</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('sin')">sin(x°)</button>
+                    <button class="btn-func" onclick="calcAdvanced('cos')">cos(x°)</button>
+                    <button class="btn-func" onclick="calcAdvanced('tan')">tan(x°)</button>
+                </div>
+
+                <h4 class="func-group-title">🔄 Teskari trigonometriya</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('asin')">arcsin(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('acos')">arccos(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('atan')">arctan(x)</button>
+                </div>
+
+                <h4 class="func-group-title">📈 Giperbolik funksiyalar</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('sinh')">sinh(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('cosh')">cosh(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('tanh')">tanh(x)</button>
+                </div>
+
+                <h4 class="func-group-title">🔢 Boshqa funksiyalar</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('sqrt')">√(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('cbrt')">∛(x)</button>
+                    <button class="btn-func" onclick="calcAdvanced('pow')" title="Daraja">xⁿ</button>
+                    <button class="btn-func" onclick="calcAdvanced('factorial')">x!</button>
+                    <button class="btn-func" onclick="calcAdvanced('abs')">|x|</button>
+                </div>
+
+                <h4 class="func-group-title">⬆️➡️ Yaxlitlash</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('floor')">⌊x⌋</button>
+                    <button class="btn-func" onclick="calcAdvanced('ceil')">⌈x⌉</button>
+                    <button class="btn-func" onclick="calcAdvanced('round')">round(x)</button>
+                </div>
+
+                <h4 class="func-group-title">🔃 Birliklar</h4>
+                <div class="func-buttons">
+                    <button class="btn-func" onclick="calcAdvanced('deg')">rad → °</button>
+                    <button class="btn-func" onclick="calcAdvanced('rad')">° → rad</button>
+                </div>
+
+                <h4 class="func-group-title">📍 Doimiylar</h4>
+                <div class="func-buttons">
+                    <button class="btn-func btn-const" onclick="calcConst('pi')">π</button>
+                    <button class="btn-func btn-const" onclick="calcConst('e')">e</button>
+                </div>
+            </div>
+
+            <!-- NATIJA PANEL -->
+            <div id="result-panel" class="result-panel" style="display:none;">
+                <span class="result-label">Natija:</span>
+                <span id="result-text" class="result-value"></span>
+            </div>
+        </div>
+
+        <!-- TARIX -->
+        {% if history %}
+        <div class="history-panel">
+            <h3>📋 Oliy matematika tarixi</h3>
+            <ul class="history-list">
+                {% for item in history %}
+                <li class="history-item">
+                    <span class="history-expr">{{ item.expression }}</span>
+                    <span class="history-result">= {{ item.result }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{% url 'history' %}" class="view-all-link">Hammasini ko'rish →</a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showBase() {
+    document.getElementById('base-group').style.display = 'block';
+}
+
+async function calcAdvanced(funcName) {
+    const value = document.getElementById('main-value').value;
+    const base  = document.getElementById('base-value').value;
+
+    if (!value && funcName !== 'pi' && funcName !== 'e') {
+        alert('Qiymat kiriting!');
+        return;
+    }
+
+    try {
+        const response = await fetch('/calculate/advanced/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                function: funcName,
+                value: value || 0,
+                base: base || null
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            document.getElementById('adv-display').textContent = 'Xato!';
+            alert(data.error);
+        } else {
+            document.getElementById('adv-expression').textContent = data.expression + ' =';
+            document.getElementById('adv-display').textContent = data.result;
+
+            const panel = document.getElementById('result-panel');
+            panel.style.display = 'flex';
+            document.getElementById('result-text').textContent =
+                `${data.expression} = ${data.result}`;
+        }
+    } catch (err) {
+        alert('Ulanish xatosi!');
+    }
+}
+
+async function calcConst(name) {
+    document.getElementById('main-value').value = '0';
+    await calcAdvanced(name);
+}
+
+function getCookie(name) {
+    let value = '; ' + document.cookie;
+    let parts = value.split('; ' + name + '=');
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+<!-- templates/base.html -->
+<!-- Barcha sahifalar shu shablondan meros oladi -->
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kalkulyator{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<!-- NAV BAR -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{% url 'home' %}" class="nav-logo">🧮 Kalkulyator</a>
+
+        <div class="nav-right">
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Rejimni o'zgartirish">
+                <span class="theme-icon">🌙</span>
+            </button>
+
+            <div class="nav-links">
+                <a href="{% url 'home' %}" class="nav-link">Asosiy</a>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'advanced' %}" class="nav-link">Oliy Matematika</a>
+                    <a href="{% url 'history' %}" class="nav-link">Tarix</a>
+                    <a href="{% url 'profile' %}" class="nav-link">👤 {{ user.username }}</a>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline">Chiqish</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline">Kirish</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary">Ro'yxatdan o'tish</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- FLASH MESSAGES (muvaffaqiyat/xato xabarlari) -->
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="message message-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ASOSIY KONTENT -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+<script>
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.querySelector('.theme-icon');
+    body.classList.toggle('light-mode');
+    const isLight = body.classList.contains('light-mode');
+    icon.textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.body.classList.add('light-mode');
+        document.querySelector('.theme-icon').textContent = '☀️';
+    }
+});
+</script>
+</body>
+</html>
