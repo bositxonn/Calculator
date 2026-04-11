@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Suniy Intellekt - Chat{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-avatar">
+                {% if profile.image %}
+                    <img src="{{ profile.image.url }}" alt="Avatar">
+                {% else %}
+                    <span>🤖</span>
+                {% endif %}
+            </div>
+            <div>
+                <h2>Suniy Intellekt</h2>
+                <p class="chat-status">Online</p>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            {% if not messages %}
+            <div class="chat-empty">
+                <span class="chat-icon">💬</span>
+                <p>Suhbatni boshlashingiz mumkin!</p>
+                <p class="chat-hint">Matematika, kalkulyator yoki boshqa savollar berishingiz mumkin</p>
+            </div>
+            {% else %}
+                {% for msg in messages %}
+                <div class="message user-msg">
+                    <div class="msg-content">{{ msg.message }}</div>
+                    <div class="msg-time">{{ msg.created_at|date:"H:i" }}</div>
+                </div>
+                <div class="message ai-msg">
+                    <div class="msg-content">{{ msg.response }}</div>
+                    <div class="msg-time">{{ msg.created_at|date:"H:i" }}</div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <form class="chat-input-form" id="chat-form">
+            {% csrf_token %}
+            <input type="text" id="chat-input" placeholder="Xabar yozing..." autocomplete="off">
+            <button type="submit" class="btn-send">📤</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+const chatForm = document.getElementById('chat-form');
+
+function getCookie(name) {
+    let value = '; ' + document.cookie;
+    let parts = value.split('; ' + name + '=');
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    chatInput.value = '';
+    chatInput.disabled = true;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user-msg';
+    userMsg.innerHTML = `<div class="msg-content">${message}</div><div class="msg-time">...</div>`;
+    chatMessages.appendChild(userMsg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        const response = await fetch('/accounts/chat/send/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        const data = await response.json();
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message ai-msg';
+        aiMsg.innerHTML = `<div class="msg-content">${data.response}</div><div class="msg-time">${data.time}</div>`;
+        chatMessages.appendChild(aiMsg);
+
+    } catch (err) {
+        alert('Xatolik yuz berdi!');
+    }
+
+    chatInput.disabled = false;
+    chatInput.focus();
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+</script>
+{% endblock %}
