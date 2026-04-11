@@ -6,20 +6,42 @@
     <div class="profile-card">
         <h1 class="calc-title">👤 Profil</h1>
 
-        <div class="profile-info">
-            <div class="profile-row">
-                <span class="profile-label">Foydalanuvchi nomi:</span>
-                <span class="profile-value">{{ user.username }}</span>
+        <div class="profile-image-section">
+            <div class="profile-image-upload">
+                {% if profile.image %}
+                    <img src="{{ profile.image.url }}" alt="Profil rasmi" id="preview-img">
+                {% else %}
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%236366f1'/%3E%3Ctext x='50' y='60' font-size='40' text-anchor='middle' fill='white'%3E{{ user.username|slice:":1"|upper }}%3C/text%3E%3C/svg%3E" alt="Profil" id="preview-img">
+                {% endif %}
+                <label for="id_image" class="upload-overlay">
+                    📷
+                </label>
             </div>
-            <div class="profile-row">
-                <span class="profile-label">Email:</span>
-                <span class="profile-value">{{ user.email }}</span>
-            </div>
-            <div class="profile-row">
-                <span class="profile-label">Ro'yxatdan o'tgan:</span>
-                <span class="profile-value">{{ user.date_joined|date:"d.m.Y" }}</span>
+            <div class="profile-image-info">
+                <h3>{{ user.username }}</h3>
+                <p>Rasm o'zgartirish uchun suratga bosing</p>
             </div>
         </div>
+
+        <form method="post" enctype="multipart/form-data" class="profile-form" id="profile-form">
+            {% csrf_token %}
+            <input type="file" name="image" id="id_image" accept="image/*" style="display: none;" onchange="submitForm()">
+            
+            <div class="profile-info">
+                <div class="profile-row">
+                    <span class="profile-label">Foydalanuvchi nomi:</span>
+                    <span class="profile-value">{{ user.username }}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Email:</span>
+                    <span class="profile-value">{{ user.email }}</span>
+                </div>
+                <div class="profile-row">
+                    <span class="profile-label">Ro'yxatdan o'tgan:</span>
+                    <span class="profile-value">{{ user.date_joined|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+        </form>
 
         <div class="stats-grid">
             <div class="stat-card">
@@ -39,7 +61,16 @@
         <div class="profile-actions">
             <a href="{% url 'history' %}" class="btn btn-primary">📋 Tarixni ko'rish</a>
             <a href="{% url 'advanced' %}" class="btn btn-outline">📐 Oliy matematika</a>
+            <a href="{% url 'chat' %}" class="btn btn-outline">💬 AI Chat</a>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitForm() {
+    document.getElementById('profile-form').submit();
+}
+</script>
 {% endblock %}
