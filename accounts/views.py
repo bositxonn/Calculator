@@ -3,6 +3,7 @@
 
 import os
 import json
+import time
 from google import genai
 from google.genai import types
 
@@ -176,35 +177,44 @@ def chat_send(request):
 
 
 def generate_ai_response(message):
-    """Google Gemini orqali haqiqiy AI matematika javoblari"""
+    """Google Gemini orqali haqiqiy AI matematika javoblari (retry logic bilan)"""
     
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return "❌ Tizimda AI ulanmagan (GEMINI_API_KEY topilmadi)."
     
-    try:
-        client = genai.Client(api_key=api_key)
-        
-        system_instruction = (
-            "You are a highly intelligent math assistant and professor. "
-            "Your task is to solve equations (e.g., 2x+5=10), higher mathematics (integrals, derivatives), "
-            "algebra, and geometry examples step-by-step requested by the user. "
-            "Always respond clearly, accurately, and in a friendly tone using Markdown formats. "
-            "IMPORTANT: Always reply in the exact same language the user writes in. "
-            "If they write in Russian, reply in Russian. If they write in English, reply in English. "
-            "If they write in Uzbek, reply in Uzbek."
-        )
-        
-        # Gemini-2.5-flash ishlaydi
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=message,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
+    # 3 ta urinish
+    for attempt in range(3):
+        try:
+            client = genai.Client(api_key=api_key)
+            
+            system_instruction = (
+                "You are a highly intelligent math assistant and professor. "
+                "Your task is to solve equations (e.g., 2x+5=10), higher mathematics (integrals, derivatives), "
+                "algebra, and geometry examples step-by-step requested by the user. "
+                "Always respond clearly, accurately, and in a friendly tone using Markdown formats. "
+                "IMPORTANT: Always reply in the exact same language the user writes in. "
+                "If they write in Russian, reply in Russian. If they write in English, reply in English. "
+                "If they write in Uzbek, reply in Uzbek."
             )
-        )
-        
-        return response.text
-        
-    except Exception as e:
-        return f"❌ Uzr, AI tarmog'iga ulanishda xato yuz berdi:\n\n{str(e)}"
+            
+            # gemini-2.0-flash stabilroq va zamonaviy
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=message,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                )
+            )
+            
+            return response.text
+            
+        except Exception as e:
+            error_str = str(e)
+            # Agar error 503 (Unavailable) bo'lsa va urinishlar qolgan bo'lsa
+            if "503" in error_str and attempt < 2:
+                time.sleep(2 * (attempt + 1))  # Exponential backoff
+                continue
+            return f"❌ Uzr, AI tarmog'iga ulanishda xato yuz berdi (Urinish {attempt+1}/3):\n\n{error_str}"
+    
+    return "❌ AI bilan ulanib bo'lmadi."
