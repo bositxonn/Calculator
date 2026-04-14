@@ -1,38 +1,59 @@
-# calculator_project/settings.py
-# Bu Django loyihasining asosiy sozlamalari fayli
 
 from pathlib import Path
+import os
 
-# Loyiha papkasining asosiy yo'li
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ⚠️ MUHIM: Production'da bu kalitni o'zgartiring va .env faylga ko'chiring!
-SECRET_KEY = 'django-insecure-calculator-loyiha-2024-bu-kalitni-ozgartiring'
+def load_env_file(env_path: Path) -> None:
+    if not env_path.exists():
+        return
 
-# Ishlab chiqishda True, production'da False bo'lishi SHART
-DEBUG = True
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
 
-# Production'da bu yerga o'zingizning domeningizni yozing
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+load_env_file(BASE_DIR / ".env")
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-secret-key")
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv("DEBUG", "True").lower() in ("1", "true", "yes", "on")
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if host.strip()
+]
 
 
-# Qo'shilgan ilovalar (apps)
+# Application definition
+
 INSTALLED_APPS = [
-    'django.contrib.admin',        # Admin panel
-    'django.contrib.auth',         # Login/logout tizimi
-    'django.contrib.contenttypes', # Content types
-    'django.contrib.sessions',     # Session boshqaruvi
-    'django.contrib.messages',     # Flash messages
-    'django.contrib.staticfiles',  # Static fayllar (CSS, JS)
-    'calculator',                  # Bizning kalkulyator ilovasi
-    'accounts',                    # Bizning auth ilovasi
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'calculator',
+    'accounts',
+    'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',        # CSRF xujumlaridan himoya
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -43,7 +64,7 @@ ROOT_URLCONF = 'calculator_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Global templates papkasi
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -58,38 +79,91 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'calculator_project.wsgi.application'
 
-# Ma'lumotlar bazasi - SQLite (oddiy, o'rnatish shart emas)
+
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # Bu fayl avtomatik yaratiladi
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
-# Parol tekshirish qoidalari
+
+# Password validation
+# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
-LANGUAGE_CODE = 'uz'       # O'zbek tili
-TIME_ZONE = 'Asia/Tashkent'  # Toshkent vaqti
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
 USE_I18N = True
+
 USE_TZ = True
 
-# Static fayllar (CSS, JS) joylashuvi
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# Media fayllar (rasmlar)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+
+STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# This is a list of additional directories where Django will look for static files 
+# during development (and for collectstatic to copy from).
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Login/logout yo'nalishlari
-LOGIN_URL = '/accounts/login/'           # Login bo'lmasa shu sahifaga yuboradi
-LOGIN_REDIRECT_URL = '/'                 # Login bo'lgandan keyin bosh sahifaga
-LOGOUT_REDIRECT_URL = '/'               # Logout bo'lgandan keyin bosh sahifaga
+
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+if not DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SAMESITE = "None"
