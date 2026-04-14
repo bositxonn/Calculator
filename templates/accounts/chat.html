@@ -34,7 +34,8 @@
                     <div class="msg-time">{{ msg.created_at|date:"H:i" }}</div>
                 </div>
                 <div class="message ai-msg">
-                    <div class="msg-content">{{ msg.response }}</div>
+                    <div class="msg-content raw-content" style="display: none;">{{ msg.response }}</div>
+                    <div class="msg-content rendered-content"></div>
                     <div class="msg-time">{{ msg.created_at|date:"H:i" }}</div>
                 </div>
                 {% endfor %}
@@ -51,10 +52,33 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Markdown and Math renderers -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
 <script>
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const chatForm = document.getElementById('chat-form');
+
+// Render existing messages on load
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.ai-msg').forEach(msg => {
+        const rawEl = msg.querySelector('.raw-content');
+        const renderEl = msg.querySelector('.rendered-content');
+        if(rawEl && renderEl) {
+            renderEl.innerHTML = marked.parse(rawEl.textContent);
+        }
+    });
+});
 
 function getCookie(name) {
     let value = '; ' + document.cookie;
@@ -90,8 +114,19 @@ chatForm.addEventListener('submit', async (e) => {
 
         const aiMsg = document.createElement('div');
         aiMsg.className = 'message ai-msg';
-        aiMsg.innerHTML = `<div class="msg-content">${data.response}</div><div class="msg-time">${data.time}</div>`;
+        
+        let parsedContent = data.response;
+        if(typeof marked !== 'undefined') {
+            parsedContent = marked.parse(data.response);
+        }
+
+        aiMsg.innerHTML = `<div class="msg-content rendered-content">${parsedContent}</div><div class="msg-time">${data.time}</div>`;
         chatMessages.appendChild(aiMsg);
+        
+        // Re-run MathJax on the new message
+        if (window.MathJax) {
+            MathJax.typesetPromise([aiMsg]).catch((err) => console.log(err.message));
+        }
 
     } catch (err) {
         alert('Xatolik yuz berdi!');

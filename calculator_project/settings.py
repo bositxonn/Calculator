@@ -1,10 +1,15 @@
 # calculator_project/settings.py
 # Bu Django loyihasining asosiy sozlamalari fayli
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Loyiha papkasining asosiy yo'li
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # ⚠️ MUHIM: Production'da bu kalitni o'zgartiring va .env faylga ko'chiring!
 SECRET_KEY = 'django-insecure-calculator-loyiha-2024-bu-kalitni-ozgartiring'
