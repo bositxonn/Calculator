@@ -128,7 +128,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Откройте браузер: **http://127.0.0.1:8000**
+Откройте браузер: **https://calculatorhandmade.pythonanywhere.com/**
 
 ### Переменные окружения
 
